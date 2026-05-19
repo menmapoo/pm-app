@@ -4,7 +4,7 @@
     {
       "src": "src/index.ts",
       "use": "@vercel/node",
-      "config": { "maxLambdaSize": "50mb", "bundle": false }
+      "config": { "maxLambdaSize": "50mb" }
     }
   ],
   "routes": [
