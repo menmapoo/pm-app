@@ -57,8 +57,12 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ message: 'Internal server error', error: NODE_ENV === 'development' ? err.message : undefined });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} [${NODE_ENV}]`);
-});
+// In serverless environments (Vercel), the app is exported and the platform
+// handles HTTP — listen() is only called in local dev / self-hosted mode.
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT} [${NODE_ENV}]`);
+  });
+}
 
 export default app;
