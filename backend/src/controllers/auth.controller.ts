@@ -59,8 +59,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const token = signToken({ userId: user.id, email: user.email, role: user.role });
     const { password: _, ...safeUser } = user;
     res.json({ user: safeUser, token });
-  } catch {
-    res.status(500).json({ message: 'Login failed' });
+  } catch (err: any) {
+    console.error('[login error]', err);
+    res.status(500).json({ message: 'Login failed', debug: String(err?.message ?? err) });
   }
 };
 
