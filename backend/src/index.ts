@@ -46,6 +46,18 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), environment: NODE_ENV });
 });
 
+// Temporary diagnostic — remove after debugging
+app.get('/api/dbtest', async (_req, res) => {
+  try {
+    const prisma = (await import('./utils/prisma')).default;
+    const count = await prisma.user.count();
+    const url = process.env.DATABASE_URL ?? '';
+    res.json({ ok: true, userCount: count, isNeon: url.includes('neon.tech'), urlPrefix: url.slice(0, 40) });
+  } catch (err: any) {
+    res.status(500).json({ ok: false, error: String(err?.message ?? err), stack: String(err?.stack ?? '').slice(0, 500) });
+  }
+});
+
 // 404 handler
 app.use((_req, res) => {
   res.status(404).json({ message: 'Route not found' });
