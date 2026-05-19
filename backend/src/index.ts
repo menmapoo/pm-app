@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import prisma from './utils/prisma';
 
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
@@ -46,10 +47,13 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), environment: NODE_ENV });
 });
 
-// Temporary diagnostic — remove after debugging
+// Temporary diagnostics — remove after debugging
+app.get('/api/ping', (_req, res) => {
+  res.json({ pong: true });
+});
+
 app.get('/api/dbtest', async (_req, res) => {
   try {
-    const prisma = (await import('./utils/prisma')).default;
     const count = await prisma.user.count();
     const url = process.env.DATABASE_URL ?? '';
     res.json({ ok: true, userCount: count, isNeon: url.includes('neon.tech'), urlPrefix: url.slice(0, 40) });
