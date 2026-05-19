@@ -1,0 +1,11 @@
+{
+  "name": "pm-app",
+  "version": "1.0.0",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "seed": "cd backend && npm run seed",
+    "setup": "cd backend && npm install && npx prisma migrate dev --name init && npx prisma generate && npm run seed"
+  }
+}

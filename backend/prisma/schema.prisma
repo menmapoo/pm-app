@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PROJECT_MANAGER
+  DEVELOPER
+  VIEWER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum TicketType {
+  BUG
+  TASK
+  STORY
+  IMPROVEMENT
+}
+
+enum TicketStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  HIGHEST
+}
+
+enum ProjectRole {
+  MANAGER
+  DEVELOPER
+  VIEWER
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(DEVELOPER)
+  avatar    String?
+  bio       String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectMembers   ProjectMember[]
+  assignedTickets  Ticket[]              @relation("AssignedTickets")
+  reportedTickets  Ticket[]              @relation("ReportedTickets")
+  comments         Comment[]
+  activityLogs     ActivityLog[]
+  profileRequests  ProfileChangeRequest[] @relation("UserRequests")
+  reviewedRequests ProfileChangeRequest[] @relation("ReviewedRequests")
+
+  @@map("users")
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  key         String        @unique
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  members      ProjectMember[]
+  tickets      Ticket[]
+  activityLogs ActivityLog[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id        String      @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(DEVELOPER)
+  createdAt DateTime    @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+model Ticket {
+  id          String         @id @default(cuid())
+  key         String         @unique
+  title       String
+  description String?
+  type        TicketType     @default(TASK)
+  status      TicketStatus   @default(BACKLOG)
+  priority    TicketPriority @default(MEDIUM)
+  startDate   DateTime?
+  dueDate     DateTime?
+  position    Int            @default(0)
+  projectId   String
+  assigneeId  String?
+  reporterId  String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee     User?         @relation("AssignedTickets", fields: [assigneeId], references: [id])
+  reporter     User          @relation("ReportedTickets", fields: [reporterId], references: [id])
+  comments     Comment[]
+  activityLogs ActivityLog[]
+
+  @@map("tickets")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  ticketId  String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String
+  details   Json?
+  userId    String
+  projectId String?
+  ticketId  String?
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  ticket  Ticket?  @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+
+  @@map("activity_logs")
+}
+
+model ProfileChangeRequest {
+  id             String        @id @default(cuid())
+  userId         String
+  requestedName  String?
+  requestedEmail String?
+  requestedBio   String?
+  status         RequestStatus @default(PENDING)
+  adminNote      String?
+  reviewedById   String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user       User  @relation("UserRequests", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("ReviewedRequests", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@map("profile_change_requests")
+}
